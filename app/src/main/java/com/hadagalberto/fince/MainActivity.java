@@ -16,12 +16,14 @@ import android.widget.Toast;
 
 import com.parse.DeleteCallback;
 import com.parse.FindCallback;
+import com.parse.ParseAnalytics;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -74,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void validaLogin(){
+        ParseAnalytics.trackAppOpenedInBackground(getIntent());
         if (ParseUser.getCurrentUser() == null)
             startActivity(new Intent(getApplicationContext(), LoginActivity.class));
     }
@@ -98,9 +101,16 @@ public class MainActivity extends AppCompatActivity {
                     List<String> contas = new ArrayList<>();
                     for (ParseObject conta : objects){
                         String tipo = (conta.getBoolean("Tipo") ? "Receber" : "Pagar");
-                        contas.add(conta.getString("Descricao") + " - R$ " + conta.getDouble("Valor") + " - " + tipo);
+                        String tipoPassado = (conta.getBoolean("Tipo") ? "Recebido " : "Pago ");
+                        Calendar now = Calendar.getInstance();
+                        now.setTime(conta.getDate("Vencimento"));
+                        String dataString = now.get(Calendar.DAY_OF_MONTH) + "/" + (now.get(Calendar.MONTH)+1) + "/" + now.get(Calendar.YEAR);
+                        contas.add(conta.getString("Descricao")
+                                + "\nValor R$ " + conta.getDouble("Valor") + " - " + tipoPassado + conta.getDouble("JaPago") + " - " + "Restam R$ " + String.valueOf(conta.getDouble("Valor") - conta.getDouble("JaPago"))
+                                + "\nVencimento em " + dataString
+                                + "\nConta para " + tipo);
                     }
-                    ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, contas){
+                    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, contas){
                         @Override
                         public View getView(int position, View convertView, ViewGroup parent){
                             // Get the current item from ListView
@@ -108,9 +118,24 @@ public class MainActivity extends AppCompatActivity {
                             ParseObject obj = objetos.get(position);
                             String cor;
                             if(obj.getBoolean("Tipo")){
-                                
+                                if (obj.getDouble("JaPago") == 0.0)
+                                    cor = "#8BE8BB";
+                                else if (obj.getDouble("JaPago") < obj.getDouble("Valor"))
+                                    cor = "#87CBFF";
+                                else
+                                    cor = "#88FF65";
+                            } else{
+                                if (obj.getDouble("JaPago") == 0.0)
+                                    cor = "#FF8671";
+                                else if (obj.getDouble("JaPago") < obj.getDouble("Valor"))
+                                    cor = "#FFC60D";
+                                else
+                                    cor = "#88FF65";
                             }
-                            view.setBackgroundColor(Color.parseColor("#FFB6B546"));
+                            //vermelho #FF0000
+                            //amarelho #FFC60D
+                            //azul #87CBFF
+                            view.setBackgroundColor(Color.parseColor(cor));
                             return view;
                         }
                     };

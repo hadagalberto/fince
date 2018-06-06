@@ -27,12 +27,11 @@ import java.util.List;
 
 public class Conta extends AppCompatActivity{
 
-    EditText desc, valor;
+    private EditText desc, valor, data, jaPago;
     private DatePickerDialog.OnDateSetListener dateSetListener;
     private Date dataVencimento;
-    Button vencimento, salvar;
-    EditText data;
-    Switch tipo;
+    private Button vencimento, salvar;
+    private Switch tipo;
     private ParseObject contaObjeto;
 
     @Override
@@ -49,6 +48,7 @@ public class Conta extends AppCompatActivity{
         data = findViewById(R.id.txtVencimento);
         tipo = findViewById(R.id.switch1);
         salvar = findViewById(R.id.btnSalvar);
+        jaPago = findViewById(R.id.txtJaPago);
         tipo.setTextOn("Receber");
         tipo.setTextOff("Pagar");
         data.setEnabled(false);
@@ -126,6 +126,7 @@ public class Conta extends AppCompatActivity{
                     contaObjeto = objects.get(0);
                     valor.setText(String.valueOf(contaObjeto.getDouble("Valor")));
                     dataVencimento = contaObjeto.getDate("Vencimento");
+                    jaPago.setText(String.valueOf(contaObjeto.getDouble("JaPago")));
                     //Cria um calendario para converter para data
                     Calendar now = Calendar.getInstance();
                     now.setTime(dataVencimento);
@@ -157,7 +158,6 @@ public class Conta extends AppCompatActivity{
             erro++;
         if(desc.getText().toString().trim().equals(""))
             erro++;
-
         //Caso esteja, reabilita todos os campos e mostra um toast
         if (erro > 0){
             valor.setEnabled(true);
@@ -168,12 +168,28 @@ public class Conta extends AppCompatActivity{
             return;
         }
 
+        double jaPagoDouble = 0.0;
+        //Verifica se o Ja pago é maior que o valor
+        if (!jaPago.getText().toString().equals("")) {
+            if (Double.parseDouble(jaPago.getText().toString().trim()) > Double.parseDouble(valor.getText().toString().trim())) {
+                valor.setEnabled(true);
+                desc.setEnabled(true);
+                vencimento.setEnabled(true);
+                tipo.setEnabled(true);
+                Toast.makeText(getApplicationContext(), "Já Pago maior que valor original", Toast.LENGTH_LONG).show();
+                return;
+            }
+            jaPagoDouble = Double.parseDouble(jaPago.getText().toString().trim());
+        }
+
         //Pega os valores
         double valorDouble = Double.parseDouble(valor.getText().toString().trim());
+
         String descString = desc.getText().toString().trim();
 
         //Cria o objeto do Parse
         contaObjeto.put("Valor", valorDouble);
+        contaObjeto.put("JaPago", jaPagoDouble);
         contaObjeto.put("Vencimento", dataVencimento);
         boolean tipoO = tipo.isChecked();
         contaObjeto.put("Tipo", tipoO);
