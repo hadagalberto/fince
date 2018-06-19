@@ -11,7 +11,6 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Switch;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.parse.FindCallback;
@@ -19,13 +18,12 @@ import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
-import com.parse.SaveCallback;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class Conta extends AppCompatActivity{
+public class ContaActivity extends AppCompatActivity{
 
     private EditText desc, valor, data, jaPago;
     private DatePickerDialog.OnDateSetListener dateSetListener;
@@ -38,7 +36,7 @@ public class Conta extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conta);
-        setTitle("Fince - Conta");
+        setTitle("Fince - ContaActivity");
         Intent intent = getIntent();
 
         //Referencia as views
@@ -82,7 +80,7 @@ public class Conta extends AppCompatActivity{
                 int day = cal.get(Calendar.DAY_OF_MONTH);
 
                 DatePickerDialog dialog = new DatePickerDialog(
-                        Conta.this,
+                        ContaActivity.this,
                         android.R.style.Theme_Material_Light_Dialog_MinWidth,
                         dateSetListener,
                         year, month, day
@@ -137,7 +135,7 @@ public class Conta extends AppCompatActivity{
                 } else {
                     //Se der erro mostra o erro e volta pra home
                     Toast.makeText(getApplicationContext(), "Erro ao buscar sua conta! Codigo do erro: " + e.getCode(), Toast.LENGTH_LONG).show();
-                    startActivity(new Intent(Conta.this, MainActivity.class));
+                    startActivity(new Intent(ContaActivity.this, MainActivity.class));
                 }
             }
         });
@@ -199,8 +197,8 @@ public class Conta extends AppCompatActivity{
         contaObjeto.put("Usuario", ParseUser.getCurrentUser());
         //Salva objeto offline e online se estiver conectado
         contaObjeto.saveEventually();
-        Toast.makeText(getApplicationContext(), "Conta salva com sucesso!", Toast.LENGTH_LONG).show();
-        startActivity(new Intent(Conta.this, MainActivity.class));
+        Toast.makeText(getApplicationContext(), "ContaActivity salva com sucesso!", Toast.LENGTH_LONG).show();
+        startActivity(new Intent(ContaActivity.this, MainActivity.class));
     }
 
 }

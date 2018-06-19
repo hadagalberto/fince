@@ -2,7 +2,7 @@ package com.hadagalberto.fince;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.design.widget.FloatingActionButton;
+import com.github.clans.fab.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.parse.DeleteCallback;
@@ -28,10 +27,10 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private FloatingActionButton fab;
+    private FloatingActionButton fabNovo, fabRelatorio;
     private SwipeRefreshLayout container;
     private ListView listaContas;
-    private List<ParseObject> objetos;
+    private List<ParseObject> objetos, objetosLista;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         container.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refresh();
+                refresh(false);
             }
         });
 
@@ -50,22 +49,28 @@ public class MainActivity extends AppCompatActivity {
         listaContas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                ParseObject contaSelecionada = objetos.get(i);
-                Intent intent = new Intent(MainActivity.this, Conta.class);
+                ParseObject contaSelecionada = objetosLista.get(i);
+                Intent intent = new Intent(MainActivity.this, ContaActivity.class);
                 intent.putExtra("objeto", contaSelecionada.getObjectId());
                 startActivity(intent);
             }
         });
-
-        fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        fabRelatorio = findViewById(R.id.fabRelatorio);
+        fabRelatorio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this, Conta.class));
+                Toast.makeText(getApplicationContext(), "Texto", Toast.LENGTH_LONG).show();
             }
         });
-        refreshOffline();
-        refresh();
+        fabNovo = findViewById(R.id.fabNovo);
+        fabNovo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, ContaActivity.class));
+            }
+        });
+        refresh(true);
+        refresh(false);
     }
 
     @Override
@@ -81,10 +86,12 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(getApplicationContext(), LoginActivity.class));
     }
 
-    private void refresh(){
+    private void refresh(boolean offline){
         ParseQuery<ParseObject> query = ParseQuery.getQuery("Contas");
         query.whereEqualTo("Usuario", ParseUser.getCurrentUser());
         query.setLimit(999999999);
+        if(offline)
+            query.fromLocalDatastore();
         query.orderByAscending("Vencimento");
         query.findInBackground(new FindCallback<ParseObject>() {
             @Override
@@ -99,7 +106,12 @@ public class MainActivity extends AppCompatActivity {
                     });
                     objetos = objects;
                     List<String> contas = new ArrayList<>();
+                    objetosLista = new ArrayList<>();
                     for (ParseObject conta : objects){
+                        if (conta.getDouble("Valor") == conta.getDouble("JaPago")){
+                            continue;
+                        }
+                        objetosLista.add(conta);
                         String tipo = (conta.getBoolean("Tipo") ? "Receber" : "Pagar");
                         String tipoPassado = (conta.getBoolean("Tipo") ? "Recebido " : "Pago ");
                         Calendar now = Calendar.getInstance();
@@ -142,36 +154,10 @@ public class MainActivity extends AppCompatActivity {
                     listaContas.setAdapter(adapter);
                 } else {
                     if (e.getCode() == 100){
-                        refreshOffline();
+                        refresh(true);
                         Toast.makeText(getApplicationContext(), "Sem conexão, trabalhando offline!", Toast.LENGTH_LONG).show();
                         return;
                     }
-                    Toast.makeText(getApplicationContext(), "Erro ao buscar suas contas! Codigo do erro: " + e.getCode(), Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-    }
-
-    private void refreshOffline(){
-        ParseQuery<ParseObject> query = ParseQuery.getQuery("Contas");
-        query.whereEqualTo("Usuario", ParseUser.getCurrentUser());
-        query.setLimit(999999999);
-        query.fromLocalDatastore();
-        query.orderByAscending("Vencimento");
-        query.findInBackground(new FindCallback<ParseObject>() {
-            @Override
-            public void done(List<ParseObject> objects, ParseException e) {
-                container.setRefreshing(false);
-                if (e==null){
-                    objetos = objects;
-                    List<String> contas = new ArrayList<>();
-                    for (ParseObject conta : objects){
-                        String tipo = (conta.getBoolean("Tipo") ? "Receber" : "Pagar");
-                        contas.add(conta.getString("Descricao") + " - R$ " + conta.getDouble("Valor") + " - " + tipo);
-                    }
-                    ArrayAdapter adapter = new ArrayAdapter(getApplicationContext(), android.R.layout.simple_list_item_1, contas);
-                    listaContas.setAdapter(adapter);
-                } else {
                     Toast.makeText(getApplicationContext(), "Erro ao buscar suas contas! Codigo do erro: " + e.getCode(), Toast.LENGTH_LONG).show();
                 }
             }
