@@ -27,6 +27,10 @@ android:
   - android-$ANDROID_EMU_API_LEVEL
   - extra-android-support
   - sys-img-$ANDROID_ABI-google_apis-$ANDROID_EMU_API_LEVEL
+  licences:
+  - 'android-sdk-preview-license-52d11cd2'
+  - 'android-sdk-license-.+'
+  - 'google-gdk-license-.+'
 before_script: 
   - echo -e "Host github.com\n\tHostName github.com\n\tUser git\n\tIdentityFile ~/.ssh/id_travisci\n" >> ~/.ssh/config
   - echo no | android create avd --force -n test -t android-$ANDROID_EMU_API_LEVEL --abi google_apis/$ANDROID_ABI
